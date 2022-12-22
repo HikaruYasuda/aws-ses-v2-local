@@ -1,8 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { JSONSchema7 } from 'json-schema';
 import ajv from '../ajv';
-import store from '../store';
-import { Template } from '../store';
+import store, { Template } from '../store';
 
 const handler: RequestHandler = (req, res, next) => {
   const valid = validate(req.body);
