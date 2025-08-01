@@ -54,7 +54,7 @@ const handleSimple: RequestHandler = async (req, res) => {
       html: req.body.Content.Simple.Body.Html?.Data,
       text: req.body.Content.Simple.Body.Text?.Data,
     },
-    attachments: [],
+    attachments: req.body.Content.Simple.Attachments?.map(convertAttachment),
     at: Math.floor(new Date().getTime() / 1000),
   });
 
@@ -159,14 +159,47 @@ const handleTemplate: RequestHandler = async (req, res) => {
       html: compileTemplate(template.TemplateContent.Html, data),
       text: compileTemplate(template.TemplateContent.Text, data),
     },
-    attachments: [],
+    attachments: req.body.Content.Template.Attachments?.map(convertAttachment),
     at: Math.floor(new Date().getTime() / 1000),
   });
 
   res.status(200).send({ MessageId: messageId });
 };
 
+function convertAttachment(attachment: {
+  RawContent?: string
+  ContentDisposition?: string
+  FileName?: string
+  ContentDescription?: string
+  ContentId?: string
+  ContentTransferEncoding?: string
+  ContentType?: string
+}) {
+  return {
+    content: attachment.RawContent,
+    contentType: attachment.ContentType,
+    filename: attachment.FileName,
+    description: attachment.ContentDescription,
+  };
+}
+
 export default handler;
+
+const attachmentsSchema: JSONSchema7 = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      RawContent: { type: 'string' },
+      ContentDisposition: { type: 'string' },
+      FileName: { type: 'string' },
+      ContentDescription: { type: 'string' },
+      ContentId: { type: 'string' },
+      ContentTransferEncoding: { type: 'string' },
+      ContentType: { type: 'string' },
+    },
+  },
+};
 
 const sendEmailRequestSchema: JSONSchema7 = {
   type: 'object',
@@ -213,6 +246,7 @@ const sendEmailRequestSchema: JSONSchema7 = {
               },
               required: ['Data'],
             },
+            Attachments: attachmentsSchema,
           },
           required: ['Body', 'Subject'],
         },
@@ -222,6 +256,7 @@ const sendEmailRequestSchema: JSONSchema7 = {
             TemplateArn: { type: 'string' },
             TemplateData: { type: 'string' },
             TemplateName: { type: 'string' },
+            Attachments: attachmentsSchema,
           },
         },
       },
